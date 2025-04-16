@@ -1,0 +1,242 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Record Search</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 1000px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+       .loading {
+            display: none; /* Initially hidden */
+            text-align: center;
+            margin-top: 10px;
+            font-style: italic;
+            color: #666;
+        }
+        .error-message {
+            color: red;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Record Search</h2>
+        <form id="reportForm">
+            <div class="form-group">
+                <label for="startDate">Start Date:</label>
+                <input type="date" id="startDate" name="startDate" required>
+            </div>
+            <div class="form-group">
+                <label for="endDate">End Date:</label>
+                <input type="date" id="endDate" name="endDate" required>
+            </div>
+            <div class="form-group">
+                <label for="user">Select User:</label>
+                <select id="user" name="user" required>
+                    </select>
+            </div>
+            <div class="form-group">
+                <label for="status">Select Status:</label>
+                <select id="status" name="status" required>
+                    </select>
+            </div>
+            <button type="submit">Generate Report</button>
+            <button type="reset">Clear</button> </form>
+        <div class="loading" id="reportLoading">Loading...</div>
+        <div id="reportResults"></div>
+        <div class="error-message" id="reportError"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const usersSelect = document.getElementById('user');
+            const statusesSelect = document.getElementById('status');
+            const reportResults = document.getElementById('reportResults');
+            const reportForm = document.getElementById('reportForm');
+            const reportLoading = document.getElementById('reportLoading');
+            const reportError = document.getElementById('reportError');
+
+            function showLoading() {
+                reportLoading.style.display = 'block';
+                reportError.style.display = 'none'; //hide error message when loading starts
+                reportResults.innerHTML = ''; // Clear previous results
+            }
+
+            function hideLoading() {
+                reportLoading.style.display = 'none';
+            }
+
+            function displayErrorMessage(message) {
+                reportError.textContent = message;
+                reportError.style.display = 'block';
+                reportResults.innerHTML = ''; //clear result
+            }
+
+
+            // Fetch Users
+            showLoading();
+            fetch('fetch_users.php')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    hideLoading();
+                    usersSelect.innerHTML = ''; // Clear existing options
+                    if (Array.isArray(data)) { //check if it is an array
+                        data.forEach(user => {
+                            const option = document.createElement('option');
+                            option.value = user.user;
+                            option.textContent = user.user;
+                            usersSelect.appendChild(option);
+                        });
+                     } else {
+                        displayErrorMessage('Error: Invalid data format received for users.');
+                    }
+                })
+                .catch(error => {
+                    hideLoading();
+                    console.error('Error fetching users:', error);
+                    displayErrorMessage('Error fetching users: ' + error.message);
+                    usersSelect.innerHTML = '<option value="">Error loading users</option>';
+                });
+
+            // Fetch Statuses
+            showLoading();
+            fetch('fetch_statuses.php')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    hideLoading();
+                    statusesSelect.innerHTML = ''; // Clear existing options
+                    if (Array.isArray(data)) {
+                        data.forEach(status => {
+                            const option = document.createElement('option');
+                            option.value = status.status;
+                            option.textContent = status.status;
+                            statusesSelect.appendChild(option);
+                        });
+                    }  else {
+                         displayErrorMessage('Error: Invalid data format received for statuses.');
+                    }
+                })
+                .catch(error => {
+                    hideLoading();
+                    console.error('Error fetching statuses:', error);
+                    displayErrorMessage('Error fetching statuses: ' + error.message);
+                    statusesSelect.innerHTML = '<option value="">Error loading statuses</option>';
+                });
+
+            reportForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                const formData = new FormData(this);
+
+                console.log('Form data:', Object.fromEntries(formData.entries())); // Debugging form data
+
+                showLoading(); // Show loading before fetching report
+                reportResults.innerHTML = ''; // Clear previous results
+                reportError.style.display = 'none'; // Ensure error message is hidden
+
+                fetch('generate_report.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    hideLoading();
+                    console.log('Report data:', data); // Debugging response data
+                    if (data.error) {
+                        displayErrorMessage('Error: ' + data.error);
+                    } else if (data.length === 0) {
+                        reportResults.innerHTML = '<p>No results found for the selected criteria.</p>';
+                    } else if (Array.isArray(data)) { // Check if data is an array before processing
+                        let table = '<table>';
+                        table += '<tr><th>Lead ID</th><th>Status</th><th>User</th><th>List ID</th><th>Phone Number</th><th>First Name</th><th>Last Name</th><th>Address1</th><th>Address2</th><th>City</th><th>State</th><th>Postal Code</th><th>Email</th><th>Entry Date</th></tr>';
+                        data.forEach(row => {
+                            table += `<tr>
+                                        <td>${row.lead_id || ''}</td>
+                                        <td>${row.status || ''}</td>
+                                        <td>${row.user || ''}</td>
+                                        <td>${row.list_id || ''}</td>
+                                        <td>${row.phone_number || ''}</td>
+                                        <td>${row.first_name || ''}</td>
+                                        <td>${row.last_name || ''}</td>
+                                        <td>${row.address1 || ''}</td>
+                                        <td>${row.address2 || ''}</td>
+                                        <td>${row.city || ''}</td>
+                                        <td>${row.state || ''}</td>
+                                        <td>${row.postal_code || ''}</td>
+                                        <td>${row.email || ''}</td>
+                                        <td>${row.entry_date || ''}</td>
+                                    </tr>`;
+                        });
+                        table += '</table>';
+                        reportResults.innerHTML = table;
+                    } else {
+                        displayErrorMessage('Error: Invalid data format received from server.');
+                    }
+                })
+                .catch(error => {
+                    hideLoading();
+                    console.error('Error generating report:', error);
+                    displayErrorMessage('Error generating report: ' + error.message);
+                });
+            });
+
+            reportForm.addEventListener('reset', function() {
+                reportResults.innerHTML = ''; // Clear results on reset
+                reportError.style.display = 'none'; // Hide error message
+            });
+        });
+    </script>
+</body>
+</html>
