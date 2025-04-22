@@ -3,9 +3,10 @@
 <head>
     <title>Call Log Data</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">   
     <style>
         body {
-            font-family: monospace;
+            font-family: font-family: Arial, sans-serif;
             margin: 20px;
         }
 
@@ -22,7 +23,7 @@
         }
 
         th {
-            background-color: #f2f2f2;
+            background-color: #f8f9fa;
         }
 
         form {
@@ -92,7 +93,6 @@ $sql = "SELECT
     vl.lead_id,
     vlog.call_date,
     vl.user,
-    vl.phone_code,
     vl.phone_number,
     vl.first_name,
     vl.address1,
@@ -102,14 +102,13 @@ $sql = "SELECT
     vl.city,
     vlog.length_in_sec,
     vl.comments,
-    vcn.call_notes,
-    vlog.status
+    vcn.status_name
 FROM
     vicidial_list vl
 JOIN
     vicidial_log vlog ON vl.lead_id = vlog.lead_id
 LEFT JOIN
-    vicidial_call_notes vcn ON vlog.uniqueid = vcn.vicidial_id
+    vicidial_statuses vcn ON vlog.status = vcn.status
 WHERE
     vlog.call_date BETWEEN '$startDate' AND '$endDate'
 ORDER BY
@@ -130,7 +129,7 @@ if ($result->num_rows > 0) {
 
     // Output header row (matching the SQL query)
     echo "<tr>";
-    echo "<th>Lead ID</th><th>Call Date</th><th>Agent</th><th>Phone Code</th><th>Phone Number</th><th>Customer Name</th><th>Outstanding Balance</th><th>Date of Payment</th><th>Account number</th><th>National ID No.</th><th>Customer Number</th><th>Length in sec</th><th>Customer feedback</th><th>Call Notes</th><th>Status</th>";
+    echo "<th>Lead ID</th><th>Call Date</th><th>Agent</th><th>Phone Number</th><th>Customer Name</th><th>Outstanding Balance</th><th>Date of Payment</th><th>Account number</th><th>National ID No.</th><th>Customer Number</th><th>Length in sec</th><th>Customer feedback</th><th>Disposition</th>";
     echo "</tr>";
 
     // Store data for Excel export in a JavaScript variable as an array of objects
@@ -140,7 +139,6 @@ if ($result->num_rows > 0) {
         echo "<td>" . htmlspecialchars($row["lead_id"]) . "</td>";
         echo "<td>" . htmlspecialchars($row["call_date"]) . "</td>";
         echo "<td>" . htmlspecialchars($row["user"]) . "</td>";
-        echo "<td>" . htmlspecialchars($row["phone_code"]) . "</td>";
         echo "<td>" . htmlspecialchars($row["phone_number"]) . "</td>";
         echo "<td>" . htmlspecialchars($row["first_name"]) . "</td>";
         echo "<td>" . htmlspecialchars($row["address1"]) . "</td>";
@@ -150,15 +148,13 @@ if ($result->num_rows > 0) {
         echo "<td>" . htmlspecialchars($row["city"]) . "</td>";
         echo "<td>" . htmlspecialchars($row["length_in_sec"]) . "</td>";
         echo "<td>" . htmlspecialchars($row["comments"]) . "</td>";
-        echo "<td>" . htmlspecialchars($row["call_notes"]) . "</td>";
-        echo "<td>" . htmlspecialchars($row["status"]) . "</td>";
+        echo "<td>" . htmlspecialchars($row["status_name"]) . "</td>";
         echo "</tr>";
 
         $excel_data[] = [
             'Lead ID' => $row["lead_id"],
             'Call Date' => $row["call_date"],
             'Agent' => $row["user"],
-            'Phone Code' => $row["phone_code"],
             'Phone Number' => $row["phone_number"],
             'Customer Name' => $row["first_name"] . ' ' . $row["last_name"],
             'Outstanding Balance' => $row["address1"],
@@ -168,8 +164,7 @@ if ($result->num_rows > 0) {
             'Customer Number' => '', // No corresponding field in your SQL
             'Length in sec' => $row["length_in_sec"],
             'Customer feedback' => $row["comments"],
-            'Call Notes' => $row["call_notes"],
-            'Status' => $row["status"]
+            'Disposition' => $row["status_name"]
         ];
     }
 

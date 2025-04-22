@@ -6,10 +6,11 @@
  * /var/spool/asterisk/monitorDONE/MP3 directory and its subdirectories,
  * filtering by file modification date, and provides a web interface for setting the date range.
  *
- * @author AI Assistant
+ * @author Henry Robert Muwanika
  * @version 1.6
  * @date 2025-04-16
  */
+
 
 // Define the directory to search in.
 $monitor_dir = '/var/spool/asterisk/monitorDONE/MP3';
@@ -76,9 +77,10 @@ $mp3_files = search_files_with_date_filter($monitor_dir, 'mp3', $start_date, $en
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Call Recording Search</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: font-family: Arial, sans-serif;
             margin: 20px;
         }
         form {
