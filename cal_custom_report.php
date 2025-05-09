@@ -3,10 +3,10 @@
 <head>
     <title>Call Log Data</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">   
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
         body {
-            font-family: font-family: Arial, sans-serif;
+            font-family: Arial, sans-serif;
             margin: 20px;
         }
 
@@ -85,8 +85,12 @@ if ($conn->connect_error) {
 }
 
 // Get filter dates from form submission
-$startDate = isset($_GET['startDate']) ? $_GET['startDate'] : '0000-00-00'; // Default start date
-$endDate = isset($_GET['endDate']) ? $_GET['endDate'] : '0000-00-00';     // Default end date
+$startDateParam = isset($_GET['startDate']) ? $_GET['startDate'] : '';
+$endDateParam = isset($_GET['endDate']) ? $_GET['endDate'] : '';
+
+// Default start and end dates for the query (covering the whole day)
+$startDate = !empty($startDateParam) ? $startDateParam . ' 00:00:00' : '0000-00-00 00:00:00';
+$endDate = !empty($endDateParam) ? $endDateParam . ' 23:59:59' : '9999-12-31 23:59:59';
 
 // SQL query with date filter
 $sql = "SELECT
@@ -118,8 +122,8 @@ $result = $conn->query($sql);
 
 // Form for date selection
 echo "<form method='get'>";
-echo "<label for='startDate'>Start Date:</label><input type='date' name='startDate' id='startDate' value='$startDate'>";
-echo "<label for='endDate'>End Date:</label><input type='date' name='endDate' id='endDate' value='$endDate'>";
+echo "<label for='startDate'>Start Date:</label><input type='date' name='startDate' id='startDate' value='" . ($startDateParam ?? '') . "'>";
+echo "<label for='endDate'>End Date:</label><input type='date' name='endDate' id='endDate' value='" . ($endDateParam ?? '') . "'>";
 echo "<input type='submit' value='Filter'>";
 echo "</form><br>";
 
@@ -175,7 +179,7 @@ if ($result->num_rows > 0) {
     $json_excel_data = json_encode($excel_data);
 
     // Add export button with JavaScript download for Excel 2007 (.xlsx)
-    echo '<button onclick="downloadExcel(' . htmlspecialchars($json_excel_data, ENT_QUOTES, 'UTF-8') . ')">Export to Excel (xlsx)</button>';
+    echo '<button onclick="downloadExcel(' . htmlspecialchars($json_excel_data, ENT_QUOTES, 'UTF-8') . ')">Download report</button>';
     echo '<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>';
     echo '<script>
         function downloadExcel(excelData) {
