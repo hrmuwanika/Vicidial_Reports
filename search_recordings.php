@@ -16,7 +16,7 @@
 $monitor_dir = '/var/spool/asterisk/monitorDONE/MP3';
 
 // Initialize date range.  Use today as a default end date.
-$start_date = isset($_GET['start_date']) ? strtotime($_GET['start_date'] . ' 00:00:00') : strtotime(date('Y-m-d', strtotime('-7 days')) . ' 00:00:00'); // Default: 7 days ago
+$start_date = isset($_GET['start_date']) ? strtotime($_GET['start_date'] . ' 00:00:00') : strtotime(date('Y-m-d', strtotime('0 days')) . ' 00:00:00'); // Default: 0 days ago
 $end_date = isset($_GET['end_date']) ? strtotime($_GET['end_date'] . ' 23:59:59') : strtotime(date('Y-m-d') . ' 23:59:59'); // Default: today
 
 // Function to recursively search for files in a directory with a date filter.

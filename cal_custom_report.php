@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Call Log Data</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+   // <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
         body {
@@ -85,18 +85,14 @@ if ($conn->connect_error) {
 }
 
 // Get filter dates from form submission
-$startDateParam = isset($_GET['startDate']) ? $_GET['startDate'] : '';
-$endDateParam = isset($_GET['endDate']) ? $_GET['endDate'] : '';
-
-// Default start and end dates for the query (covering the whole day)
-$startDate = !empty($startDateParam) ? $startDateParam . ' 00:00:00' : '0000-00-00 00:00:00';
-$endDate = !empty($endDateParam) ? $endDateParam . ' 23:59:59' : '9999-12-31 23:59:59';
+$startDate = isset($_GET['startDate']) ? $_GET['startDate'] . ' 00:00:00' : '0000-00-00';
+$endDate = isset($_GET['endDate']) ? $_GET['endDate'] . ' 23:59:59' : '0000-00-00';
 
 // SQL query with date filter
 $sql = "SELECT
     vl.lead_id,
     vlog.call_date,
-    vl.user,
+    vus.full_name,
     vl.phone_number,
     vl.first_name,
     vl.address1,
@@ -113,6 +109,8 @@ JOIN
     vicidial_log vlog ON vl.lead_id = vlog.lead_id
 LEFT JOIN
     vicidial_statuses vcn ON vlog.status = vcn.status
+LEFT JOIN
+    vicidial_users vus ON vlog.user = vus.user
 WHERE
     vlog.call_date BETWEEN '$startDate' AND '$endDate'
 ORDER BY
@@ -142,7 +140,7 @@ if ($result->num_rows > 0) {
         echo "<tr>";
         echo "<td>" . htmlspecialchars($row["lead_id"]) . "</td>";
         echo "<td>" . htmlspecialchars($row["call_date"]) . "</td>";
-        echo "<td>" . htmlspecialchars($row["user"]) . "</td>";
+        echo "<td>" . htmlspecialchars($row["full_name"]) . "</td>";
         echo "<td>" . htmlspecialchars($row["phone_number"]) . "</td>";
         echo "<td>" . htmlspecialchars($row["first_name"]) . "</td>";
         echo "<td>" . htmlspecialchars($row["address1"]) . "</td>";
@@ -158,7 +156,7 @@ if ($result->num_rows > 0) {
         $excel_data[] = [
             'Lead ID' => $row["lead_id"],
             'Call Date' => $row["call_date"],
-            'Agent' => $row["user"],
+            'Agent' => $row["full_name"],
             'Phone Number' => $row["phone_number"],
             'Customer Name' => $row["first_name"] . ' ' . $row["last_name"],
             'Outstanding Balance' => $row["address1"],
